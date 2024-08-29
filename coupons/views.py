@@ -188,7 +188,7 @@ class CreateCouponView(generics.GenericAPIView):
             "message": f"{quantity} coupon(s) created successfully. Please proceed with payment.",
             "order_id": order.id,
             "razorpay_order_id": razorpay_order['id'],
-            "amount": float(amount)  # Convert Decimal to float for response
+            "amount": float(amount)  
         }, status=status.HTTP_201_CREATED)
 
 
