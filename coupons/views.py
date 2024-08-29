@@ -134,8 +134,9 @@ from django.http import JsonResponse
 
 
 class CreateCouponView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = CouponSerializer
-    permission_classes = [AllowAny]  # Allow any user to access this view
+
 
     def post(self, request, user_id, *args, **kwargs):
         user = get_object_or_404(User, id=user_id)
