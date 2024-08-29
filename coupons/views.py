@@ -134,10 +134,8 @@ from django.http import JsonResponse
 
 
 class CreateCouponView(generics.GenericAPIView):
-    permission_classes = [AllowAny]
     serializer_class = CouponSerializer
-
-
+    
     def post(self, request, user_id, *args, **kwargs):
         user = get_object_or_404(User, id=user_id)
         quantity = int(request.data.get('quantity', 1))
@@ -168,7 +166,7 @@ class CreateCouponView(generics.GenericAPIView):
             amount_in_paise=amount_in_paise
         )
 
-        # Generate Razorpay Order ID
+        # Initialize Razorpay client with credentials from environment variables
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         data = {
             "amount": amount_in_paise,  # Amount in paise

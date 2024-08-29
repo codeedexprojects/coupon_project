@@ -4,6 +4,10 @@ from pathlib import Path
 import os
 from decouple import config
 
+# Read Razorpay credentials from environment variables
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
+
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,9 +43,7 @@ INSTALLED_APPS = [
 
 
 
-# Other settings...
-RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
-RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
