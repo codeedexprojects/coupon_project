@@ -181,3 +181,17 @@ class TimerSerializer(serializers.ModelSerializer):
         model = Timer
         fields = ['id', 'start_date', 'end_date', 'is_active']
         read_only_fields = ['is_active']
+
+class ApplyReferralCodeSerializer(serializers.Serializer):
+    referral_code = serializers.CharField(required=True)
+
+    def validate_referral_code(self, value):
+        if not Referral.objects.filter(referral_code=value).exists():
+            raise serializers.ValidationError("Invalid referral code.")
+        return value
+
+    def apply_referral_code(self, user):
+        referral_code = self.validated_data['referral_code']
+        referral = Referral.objects.get(referral_code=referral_code)
+        user.referred_by = referral
+        user.save()

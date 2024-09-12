@@ -20,6 +20,8 @@ from rest_framework.views import APIView
 from django.db.models import Sum
 from django.contrib.auth import login
 from decimal import Decimal
+from rest_framework.exceptions import NotFound
+
 
 
 
@@ -64,7 +66,6 @@ from rest_framework.decorators import api_view
 
 @api_view(['POST'])
 def UserLoginView(request):
-    # Your view logic here
     full_name = request.data.get('full_name')
     mobile_number = request.data.get('mobile_number')
     
@@ -166,7 +167,6 @@ class CreateCouponView(generics.GenericAPIView):
             amount_in_paise=amount_in_paise
         )
 
-        # Initialize Razorpay client with credentials from environment variables
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         data = {
             "amount": amount_in_paise,  # Amount in paise
@@ -179,7 +179,6 @@ class CreateCouponView(generics.GenericAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Store Razorpay order ID in Order model
         order.razorpay_order_id = razorpay_order['id']
         order.save()
 
@@ -653,3 +652,16 @@ class RetrieveEndDateView(generics.GenericAPIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+class ApplyReferralCodeView(APIView):
+    def post(self, request, user_id, *args, **kwargs):
+        serializer = ApplyReferralCodeSerializer(data=request.data)
+        if serializer.is_valid():
+            referral_code = serializer.validated_data['referral_code']
+            user = get_object_or_404(User, id=user_id)
+            
+            serializer.apply_referral_code(user)
+            
+            return Response({"status": "Referral code applied successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

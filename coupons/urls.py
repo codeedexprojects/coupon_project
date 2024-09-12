@@ -56,6 +56,9 @@ urlpatterns = [
     path('timer-edit-del-up-ret/<int:pk>/', RetrieveUpdateDeleteTimerView.as_view(), name='retrieve-update-delete-timer'),
     path('end-date/<int:pk>/', RetrieveEndDateView.as_view(), name='retrieve-end-date'),
 
+    path('apply-referral-code/<int:user_id>/', ApplyReferralCodeView.as_view(), name='apply_referral_code'),
+
+
 
 
 
