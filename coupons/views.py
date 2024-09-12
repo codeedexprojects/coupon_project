@@ -656,12 +656,13 @@ class RetrieveEndDateView(generics.GenericAPIView):
 
 class ApplyReferralCodeView(APIView):
     def post(self, request, user_id, *args, **kwargs):
-        serializer = ApplyReferralCodeSerializer(data=request.data)
+        user = get_object_or_404(User, id=user_id)
+        serializer = ApplyReferralCodeSerializer(data=request.data, context={'user': user})
+        
         if serializer.is_valid():
-            referral_code = serializer.validated_data['referral_code']
-            user = get_object_or_404(User, id=user_id)
-            
+            # Apply referral code to user
             serializer.apply_referral_code(user)
             
             return Response({"status": "Referral code applied successfully."}, status=status.HTTP_200_OK)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
