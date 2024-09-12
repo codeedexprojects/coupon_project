@@ -186,12 +186,22 @@ class ApplyReferralCodeSerializer(serializers.Serializer):
     referral_code = serializers.CharField(required=True)
 
     def validate_referral_code(self, value):
-        if not Referral.objects.filter(referral_code=value).exists():
+        if not Referral.objects.filter(referrer=value).exists():
             raise serializers.ValidationError("Invalid referral code.")
         return value
 
+    def validate(self, data):
+        referral_code = data['referral_code']
+        user = self.context['user']
+        
+        # Check if the referral code belongs to the user
+        if Referral.objects.filter(referrer=referral_code, referrer=user).exists():
+            raise serializers.ValidationError("You cannot apply your own referral code.")
+        
+        return data
+
     def apply_referral_code(self, user):
         referral_code = self.validated_data['referral_code']
-        referral = Referral.objects.get(referral_code=referral_code)
+        referral = Referral.objects.get(referrer=referral_code)
         user.referred_by = referral
         user.save()
