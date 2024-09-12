@@ -654,15 +654,21 @@ class RetrieveEndDateView(generics.GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
     
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class ApplyReferralCodeView(APIView):
     def post(self, request, user_id, *args, **kwargs):
-        user = get_object_or_404(User, id=user_id)
-        serializer = ApplyReferralCodeSerializer(data=request.data, context={'user': user})
-        
-        if serializer.is_valid():
-            # Apply referral code to user
-            serializer.apply_referral_code(user)
+        try:
+            user = get_object_or_404(User, id=user_id)
+            serializer = ApplyReferralCodeSerializer(data=request.data, context={'user': user})
             
-            return Response({"status": "Referral code applied successfully."}, status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():
+                serializer.apply_referral_code(user)
+                return Response({"status": "Referral code applied successfully."}, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error applying referral code: {e}")
+            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
