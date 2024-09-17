@@ -343,9 +343,32 @@ class TotalCouponsView(views.APIView):
         total_coupons = Coupon.objects.count()
         return Response({'total_coupons': total_coupons})
     
+from datetime import datetime
+
+    
 class TotalAmountGeneratedView(APIView):
     def get(self, request, *args, **kwargs):
-        total_amount = Order.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+        # Optional: Filter orders by a specific status (e.g., only completed orders)
+        # Add logic for filtering, if needed, such as a time range or status check
+        # For example, filter by a 'completed' status or date range
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        order_queryset = Order.objects.all()
+
+        if start_date and end_date:
+            # Convert to datetime objects and filter by the range
+            try:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d')
+                end_date = datetime.strptime(end_date, '%Y-%m-%d')
+                order_queryset = order_queryset.filter(created_at__date__range=(start_date, end_date))
+            except ValueError:
+                return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate the total amount generated from all orders
+        total_amount = order_queryset.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        # Return the response with the total amount generated
         return Response({'total_amount_generated': total_amount}, status=status.HTTP_200_OK)
 
 @csrf_exempt
@@ -659,16 +682,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ApplyReferralCodeView(APIView):
+    permission_classes = [AllowAny]  # Adjust as needed
+
     def post(self, request, user_id, *args, **kwargs):
-        try:
-            user = get_object_or_404(User, id=user_id)
-            serializer = ApplyReferralCodeSerializer(data=request.data, context={'user': user})
-            
-            if serializer.is_valid():
-                serializer.apply_referral_code(user)
-                return Response({"status": "Referral code applied successfully."}, status=status.HTTP_200_OK)
-            
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Error applying referral code: {e}")
-            return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user = get_object_or_404(User, id=user_id)
+        serializer = ApplyReferralCodeSerializer(data=request.data, context={'user': user})
+
+        if serializer.is_valid():
+            try:
+                serializer.apply_referrer_code(user)
+                return Response({"message": "Referral code applied successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

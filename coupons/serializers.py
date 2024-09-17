@@ -182,26 +182,36 @@ class TimerSerializer(serializers.ModelSerializer):
         fields = ['id', 'start_date', 'end_date', 'is_active']
         read_only_fields = ['is_active']
 
-class ApplyReferralCodeSerializer(serializers.Serializer):
-    referral_code = serializers.CharField(required=True)
 
-    def validate_referral_code(self, value):
-        if not Referral.objects.filter(referrer=value).exists():
-            raise serializers.ValidationError("Invalid referral code.")
+
+class ApplyReferralCodeSerializer(serializers.Serializer):
+    referrer_code = serializers.CharField(required=True)
+
+    def validate_referrer_code(self, value):
+        if not User.objects.filter(referral_code=value).exists():
+            raise serializers.ValidationError("Invalid referrer code.")
         return value
 
     def validate(self, data):
-        referral_code = data['referral_code']
-        user = self.context['user']
+        referrer_code = data['referrer_code']
+        user = self.context.get('user')
         
-        # Check if the referral code belongs to the user
-        if Referral.objects.filter(referrer=referral_code, referrer=user).exists():
-            raise serializers.ValidationError("You cannot apply your own referral code.")
+        if not user:
+            raise serializers.ValidationError("User is not authenticated.")
+
+        # Check if the referrer code belongs to the user
+        referrer_user = User.objects.get(referral_code=referrer_code)
+        if referrer_user == user:
+            raise serializers.ValidationError("You cannot apply your own referrer code.")
         
         return data
 
-    def apply_referral_code(self, user):
-        referral_code = self.validated_data['referral_code']
-        referral = Referral.objects.get(referrer=referral_code)
-        user.referred_by = referral
-        user.save()
+    def apply_referrer_code(self, user):
+        referrer_code = self.validated_data['referrer_code']
+        referrer_user = User.objects.get(referral_code=referrer_code)
+        referral, created = Referral.objects.get_or_create(
+            referrer=referrer_user,
+            referred_user=user
+        )
+        if created:
+            referral.save()
