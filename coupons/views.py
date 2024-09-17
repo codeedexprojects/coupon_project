@@ -354,7 +354,7 @@ class TotalAmountGeneratedView(APIView):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
-        order_queryset = Order.objects.all()
+        order_queryset = Order.objects.filter(is_amount_paid=True)
 
         if start_date and end_date:
             # Convert to datetime objects and filter by the range
@@ -365,7 +365,7 @@ class TotalAmountGeneratedView(APIView):
             except ValueError:
                 return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Calculate the total amount generated from all orders
+        # Calculate the total amount generated from all orders where is_amount_paid is True
         total_amount = order_queryset.aggregate(Sum('amount'))['amount__sum'] or 0
 
         # Return the response with the total amount generated
